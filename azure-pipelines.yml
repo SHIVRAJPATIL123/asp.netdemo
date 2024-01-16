@@ -37,7 +37,7 @@ jobs:
     inputs:
       command: 'publish'
       publishWebProjects: true
-      version: '2.1.1'
+      version: 'latest'
 
   - task: AzureRmWebAppDeployment@4
     displayName: "Deploy to Azure App Service"
