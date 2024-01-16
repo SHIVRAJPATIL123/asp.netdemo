@@ -16,7 +16,7 @@ jobs:
   - task: UseDotNet@2
     inputs:
       packageType: 'sdk'
-      version: '7.0.14' 
+      version: '8.0.0' 
 
   - task: NuGetToolInstaller@1
 
@@ -41,7 +41,7 @@ jobs:
     inputs:
       command: 'publish'
       publishWebProjects: true
-      version: '7.0.14' # Replace with the latest version
+      version: '8.0.0'
 
   - task: AzureRmWebAppDeployment@4
     displayName: "Deploy to Azure App Service"
