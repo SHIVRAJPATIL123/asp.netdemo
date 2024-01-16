@@ -1,5 +1,5 @@
-
-trigger: none
+trigger:
+- none
 
 pool:
   vmImage: 'windows-latest'
@@ -9,38 +9,41 @@ variables:
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
 
-steps:
-- task: NuGetToolInstaller@1
+jobs:
+- job: BuildAndDeploy
+  displayName: 'Build and Deploy to Azure App Service'
+  steps:
+  - task: NuGetToolInstaller@1
 
-- task: NuGetCommand@2
-  inputs:
-    restoreSolution: '$(solution)'
+  - task: NuGetCommand@2
+    inputs:
+      restoreSolution: '$(solution)'
 
-- task: VSBuild@1
-  displayName: "build"
-  inputs:
-    solution: '$(solution)'
-    msbuildArgs: '/p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:PackageLocation="$(build.artifactStagingDirectory)"'
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
+  - task: VSBuild@1
+    displayName: "Build"
+    inputs:
+      solution: '$(solution)'
+      msbuildArgs: '/p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:PackageLocation="$(build.artifactStagingDirectory)"'
+      platform: '$(buildPlatform)'
+      configuration: '$(buildConfiguration)'
 
-- task: VSTest@2
-  displayName: "Test"
-  inputs:
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
+  - task: VSTest@2
+    displayName: "Test"
+    inputs:
+      platform: '$(buildPlatform)'
+      configuration: '$(buildConfiguration)'
 
-- task: DotNetCoreCLI@2
-  inputs:
-    command: 'publish'
-    publishWebProjects: true
-    version: '2.1.1' 
+  - task: DotNetCoreCLI@2
+    inputs:
+      command: 'publish'
+      publishWebProjects: true
+      version: '2.1.1'
 
-- task: AzureRmWebAppDeployment@4
-  displayName: "Deploy"
-  inputs:
-    ConnectionType: 'AzureRM'
-    azureSubscription: 'Pay-As-You-Go(1)(f510d486-a17f-44f2-a1c4-63a7186e923c)'
-    appType: 'webApp'
-    WebAppName: 'mfwebapp4567'
-    packageForLinux: '$(System.DefaultWorkingDirectory)/**/*.zip'
+  - task: AzureRmWebAppDeployment@4
+    displayName: "Deploy to Azure App Service"
+    inputs:
+      ConnectionType: 'AzureRM'
+      azureSubscription: 'Pay-As-You-Go(1)(f510d486-a17f-44f2-a1c4-63a7186e923c)'
+      appType: 'webApp'
+      WebAppName: 'mfwebapp4567'
+      packageForLinux: '$(Pipeline.Workspace)/**/*.zip'
