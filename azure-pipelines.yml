@@ -13,6 +13,11 @@ jobs:
 - job: BuildAndDeploy
   displayName: 'Build and Deploy to Azure App Service'
   steps:
+  - task: UseDotNet@2
+    inputs:
+      packageType: 'sdk'
+      version: '3.x.x'  # Replace '3.x.x' with the latest version of .NET Core SDK
+
   - task: NuGetToolInstaller@1
 
   - task: NuGetCommand@2
@@ -37,7 +42,7 @@ jobs:
     inputs:
       command: 'publish'
       publishWebProjects: true
-      version: 'latest'
+      version: '2.1.1'
 
   - task: AzureRmWebAppDeployment@4
     displayName: "Deploy to Azure App Service"
