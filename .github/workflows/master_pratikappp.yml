@@ -1,50 +1,40 @@
-name: Build and deploy .NET 8 Azure Function App - pratikappp
+name: Build and Deploy Azure Function App (.NET 8)
 
 on:
   push:
     branches:
-      - master
-  workflow_dispatch:
+      - main
 
 env:
-  DOTNET_VERSION: '8.0'
-  PROJECT_PATH: 'src/MyFunctionApp'
-  PROJECT_FILE: 'MyFunctionApp.csproj'
-  BUILD_OUTPUT_PATH: 'output'
+  AZURE_FUNCTIONAPP_NAME: 'your-function-app-name'   # Replace with your Azure Function App name
+  AZURE_FUNCTIONAPP_PACKAGE_PATH: 'aspnet-get-started'
+  PROJECT_FILE: 'aspnet-get-started/aspnet-get-started.csproj'
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
-    permissions:
-      id-token: write   # Required for OIDC-based authentication
-      contents: read
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-      - name: Setup .NET SDK ${{ env.DOTNET_VERSION }}
-        uses: actions/setup-dotnet@v1
-        with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
+    - name: Setup .NET 8 SDK
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '8.0.x'
 
-      - name: Restore & Build .NET Project
-        working-directory: ${{ env.PROJECT_PATH }}
-        run: |
-          dotnet restore ${{ env.PROJECT_FILE }}
-          dotnet build ${{ env.PROJECT_FILE }} --configuration Release --output ./${{ env.BUILD_OUTPUT_PATH }}
+    - name: Restore dependencies
+      run: dotnet restore ${{ env.PROJECT_FILE }}
 
-      - name: Login to Azure using OIDC
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_1DA5038A687544EDA6F8FC4EEDFDE64D }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_003E7B7E001449B19E5A39167E0B771C }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_B4D303B970C549B698CC77E9FA45C930 }}
+    - name: Build
+      run: dotnet build ${{ env.PROJECT_FILE }} --configuration Release --no-restore
 
-      - name: Deploy to Azure Function App
-        uses: Azure/functions-action@v1
-        with:
-          app-name: 'pratikappp'
-          slot-name: 'Production'
-          package: '${{ env.PROJECT_PATH }}/${{ env.BUILD_OUTPUT_PATH }}'
+    - name: Publish
+      run: dotnet publish ${{ env.PROJECT_FILE }} --configuration Release --output ./publish_output --no-build
+
+    - name: Deploy to Azure Function App
+      uses: azure/functions-action@v1
+      with:
+        app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
+        package: './publish_output'
+        publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
