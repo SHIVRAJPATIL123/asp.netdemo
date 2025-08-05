@@ -1,4 +1,4 @@
-name: Build and Deploy Azure Function App (.NET 8)
+name: Build and Deploy ASP.NET (.NET Framework 4.8) to Azure Function App
 
 on:
   push:
@@ -6,9 +6,9 @@ on:
       - main
 
 env:
-  AZURE_FUNCTIONAPP_NAME: 'pratikappp'   # 🔁 Replace with actual Function App name
-  AZURE_FUNCTIONAPP_PACKAGE_PATH: 'aspnet-get-started'
-  PROJECT_FILE: '../aspnet-get-started/aspnet-get-started.csproj'
+  AZURE_FUNCTIONAPP_NAME: 'pratikappp'   # 🔁 Replace with your Function App name
+  PROJECT_FILE: 'aspnet-get-started/aspnet-get-started.csproj'
+  PUBLISH_DIR: '${{ github.workspace }}\\publish_output'
 
 jobs:
   build-and-deploy:
@@ -18,25 +18,26 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Setup .NET 8 SDK
-      uses: actions/setup-dotnet@v3
-      with:
-        dotnet-version: '8.0.x'
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v1.1
 
-    - name: Restore dependencies
-      run: dotnet restore "${{ env.PROJECT_FILE }}"
+    - name: Restore NuGet packages
+      run: msbuild ${{ env.PROJECT_FILE }} /t:Restore
 
-    - name: Build
-      run: dotnet build "${{ env.PROJECT_FILE }}" --configuration Release --no-restore
+    - name: Build solution
+      run: msbuild ${{ env.PROJECT_FILE }} /p:Configuration=Release
 
-    - name: Publish
-      run: dotnet publish "${{ env.PROJECT_FILE }}" --configuration Release --output ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}/publish_output --no-build
+    - name: Publish app to folder
+      run: |
+        msbuild ${{ env.PROJECT_FILE }} `
+          /p:Configuration=Release `
+          /p:DeployOnBuild=true `
+          /p:PublishProfile=FolderProfile `
+          /p:PublishDir="${{ env.PUBLISH_DIR }}"
 
     - name: Deploy to Azure Function App
       uses: Azure/functions-action@v1
       with:
         app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
-        package: '${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}/publish_output'
+        package: '${{ env.PUBLISH_DIR }}'
         publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
-
-
